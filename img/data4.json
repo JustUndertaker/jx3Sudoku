@@ -1,0 +1,30 @@
+{
+    "words_result": [{
+        "words": "伍柒",
+        "location": {
+            "top": 53,
+            "left": 46,
+            "width": 62,
+            "height": 16
+        },
+        "chars": [{
+            "char": "伍",
+            "location": {
+                "top": 53,
+                "left": 74,
+                "width": 10,
+                "height": 16
+            }
+        }, {
+            "char": "柒",
+            "location": {
+                "top": 53,
+                "left": 92,
+                "width": 10,
+                "height": 16
+            }
+        }]
+    }],
+    "log_id": 1395313235321683968,
+    "words_result_num": 1
+}

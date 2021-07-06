@@ -1,0 +1,55 @@
+{
+    "words_result": [{
+        "words": "捌肆",
+        "location": {
+            "top": 28,
+            "left": 50,
+            "width": 58,
+            "height": 14
+        },
+        "chars": [{
+            "char": "捌",
+            "location": {
+                "top": 28,
+                "left": 50,
+                "width": 9,
+                "height": 14
+            }
+        }, {
+            "char": "肆",
+            "location": {
+                "top": 28,
+                "left": 94,
+                "width": 9,
+                "height": 14
+            }
+        }]
+    }, {
+        "words": "伍玖",
+        "location": {
+            "top": 54,
+            "left": 45,
+            "width": 62,
+            "height": 16
+        },
+        "chars": [{
+            "char": "伍",
+            "location": {
+                "top": 54,
+                "left": 73,
+                "width": 10,
+                "height": 16
+            }
+        }, {
+            "char": "玖",
+            "location": {
+                "top": 54,
+                "left": 92,
+                "width": 10,
+                "height": 16
+            }
+        }]
+    }],
+    "log_id": 1395277334889627648,
+    "words_result_num": 2
+}

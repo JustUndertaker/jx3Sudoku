@@ -1,0 +1,30 @@
+{
+    "words_result": [{
+        "words": "肆贰",
+        "location": {
+            "top": 27,
+            "left": 51,
+            "width": 58,
+            "height": 14
+        },
+        "chars": [{
+            "char": "肆",
+            "location": {
+                "top": 27,
+                "left": 51,
+                "width": 9,
+                "height": 14
+            }
+        }, {
+            "char": "贰",
+            "location": {
+                "top": 27,
+                "left": 96,
+                "width": 8,
+                "height": 14
+            }
+        }]
+    }],
+    "log_id": 1395313049925058560,
+    "words_result_num": 1
+}
