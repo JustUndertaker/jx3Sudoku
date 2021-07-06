@@ -1,116 +1,132 @@
-#-*- coding: UTF-8 -*-
-from hashlib import md5
+# -*- coding: utf-8 -*-
 import requests
-from ast import literal_eval
-from time import time
 from configparser import ConfigParser
+import time
+import datetime
 from playsound import playsound
-import base64
 import threading
 
 
-class AiPlat(object):
-    '''
-    获得单次请求类
-    初始化方式:
-    A=AiPlat(text)
-    '''
-
+class AiPlat():
     def __init__(self):
+        self.__updateini()
+
+    def __updateini(self):
         '''
-        初始化：获取配置文件参数
+        更新配置
         '''
         config = ConfigParser()
-        config.read_file(open('voice.ini', encoding='utf-8'))
+        with open('api.ini', encoding='utf-8') as f:
+            config.read_file(f)
+        self.__AppID = config.get('Baidu', 'AppID')
+        self.__APIKey = config.get('Baidu', 'APIKey')
+        self.__SecretKey = config.get('Baidu', 'SecretKey')
+        self.__AccessToken = config.get('Baidu', 'AccessToken')
+        self.__AccessTime = config.get('Baidu', 'AccessTime')
+        with open('voice.ini', encoding='utf-8') as f:
+            config.read_file(f)
         self.__voice_loc = config.get("file", "voiceloc")
         self.__voice_error = config.get("file","error")
         self.__voice_request = config.get("file","request")
-        self.__app_id = int(config.get("voice", "APPID"))
-        self.__app_key = config.get("voice", "APPKEY")
-        self.__speaker = int(config.get("voice", "speaker"))
-        self.__format = int(config.get("voice", "format"))
-        self.__volume = int(config.get("voice", "volume"))
-        self.__speed = int(config.get("voice", "speed"))
-        self.__aht = int(config.get("voice", "aht"))
-        self.__apc = int(config.get("voice", "apc"))
+        self.__spd=int(config.get('voice','spd'))
+        self.__pit=int(config.get('voice','pit'))
+        self.__vol=int(config.get('voice','vol'))
+        self.__per=int(config.get('voice','per'))
+        self.__aue=int(config.get('voice','aue'))
         self.__lastvoice=''
 
-        if self.__format==1:
-            self.__fileName=self.__voice_loc+'voice.pcm'
-        elif self.__format==2:
-            self.__fileName=self.__voice_loc+'voice.wav'
-        elif self.__format==3:
+        if self.__aue==3:
             self.__fileName=self.__voice_loc+'voice.mp3'
+        elif self.__aue==4:
+            self.__fileName=self.__voice_loc+'voice.pcm'
+        elif self.__aue==5:
+            self.__fileName=self.__voice_loc+'voice.pcm'
+        elif self.__aue==6:
+            self.__fileName=self.__voice_loc+'voice.wav'
 
-    def __getSignString(self,parser):
-        '''
-        计算sign值
-        parser:请求参数  dict[]
-        app_key:appkey的值，单独传入
-        '''
-        uri_str = ""
-        for key in sorted(parser.keys()):
-            if key == 'app_key':
-                continue
-            uri_str = uri_str + \
-                "%s=%s&" % (key, requests.utils.quote(str(parser[key])))
-        sign_str = uri_str + 'app_key=' + self.__app_key
-        hash_md5 = md5(sign_str.encode("utf-8"))
-        return hash_md5.hexdigest().upper()
 
-    def __invoke(self, url, params):
+
+    def __accessTokenCheck(self) -> bool:
         '''
-        进行API链接
-        url:API地址
-        params:请求参数
-        目前问题：req.json()返回的是带单引号的json格式，用json.loads()无法读取
-        目前解决方法：将rsp转化为str，使用ast.literal_eval()方法转换
+        验证AccessToken是否过期
+        True:AccessToken可用
+        False:AccessToken已过期
         '''
-        header={}
-        header['Content-Type'] = 'application/x-www-form-urlencoded'
-        req = requests.post(url, headers=header, data=params)
+        if(self.__AccessTime==''):
+            return False
+        accesstime = time.mktime(
+            time.strptime(self.__AccessTime, r"%Y-%m-%d %H:%M:%S"))
+        nowtime = time.mktime(time.localtime())
+        diff = nowtime - accesstime
+        if diff >= 0:
+            return False
+        else:
+            return True
+
+    def __accessTokenRefresh(self):
+        '''
+        更新AccessToken
+        '''
+        url = 'https://aip.baidubce.com/oauth/2.0/token?grant_type=client_credentials&client_id=' + self.__APIKey + '&client_secret=' + self.__SecretKey
+        response = requests.get(url)
+        if response:
+            json = response.json()
+            sec = json['expires_in']
+            day = sec / (60 * 60 * 24) - 1
+            self.__AccessToken = json['access_token']
+            self.__AccessTime = (
+                datetime.datetime.now() +
+                datetime.timedelta(days=day)).strftime(r"%Y-%m-%d %H:%M:%S")
+            #写入配置
+            config = ConfigParser()
+            config.read('api.ini')
+            config.set('Baidu', 'AccessToken', self.__AccessToken)
+            config.set('Baidu', 'AccessTime', self.__AccessTime)
+            config.write(open('api.ini', "r+"))
+
+    def __getNlpVoice(self, tex):
+        #验证accessToken
+        if not self.__accessTokenCheck():
+            self.__accessTokenRefresh()
+            self.__updateini()
+
+        url = 'https://tsn.baidu.com/text2audio'
+        postdata={
+            "tex":tex,
+            "tok":self.__AccessToken,
+            "cuid":self.__AppID,
+            "ctp":1,
+            "lan":"zh",
+            "spd":self.__spd,
+            "pit":self.__pit,
+            "vol":self.__vol,
+            "per":self.__per,
+            "aue":self.__aue
+        }
+        headers = {'content-type': 'application/x-www-form-urlencoded'}
+        response = requests.post(url, data=postdata, headers=headers)
         try:
-            rsp = req.json()
-            dict_rsp = literal_eval(str(rsp))
+            dict_rsp={}
+            dict_rsp['code']=response.status_code
+            dict_rsp['data']=response.content
+            dict_rsp['reason']=response.reason
+ 
             return dict_rsp
         except:
 
-            dict_error = {}
-            dict_error['ret'] = -1
-            dict_error['httpcode'] = -1
-            dict_error['msg'] = "system error"
-            return dict_error
-
-    def __getNlpVoice(self, text):
-        '''
-        方法：获取语音合成内容
-        text:合成内容
-        '''
-        url = "https://api.ai.qq.com/fcgi-bin/aai/aai_tts"
-        postdata = {}
-        postdata['app_id'] = self.__app_id
-        postdata['time_stamp'] = int(time())
-        postdata['nonce_str'] = str(int(time()))
-        postdata['speaker'] = self.__speaker
-        postdata['format'] = self.__format
-        postdata['volume'] = self.__volume
-        postdata['speed'] = self.__speed
-        postdata['text'] = text
-        postdata['aht'] = self.__aht
-        postdata['apc'] = self.__apc
-        sign = self.__getSignString(postdata)
-        postdata['sign'] = sign
-        return self.__invoke(url, postdata)
-
+            dict_rsp = {}
+            dict_rsp['code'] = -1
+            dict_rsp['data'] = ""
+            dict_rsp['reason'] = "system error"
+            return dict_rsp
+    
     def __ToFile(self, data):
         '''
         方法：保存文件
         '''
-        ori_image_data=base64.b64decode(data)
         fout = open(self.__fileName, 'wb')
-        fout.write(ori_image_data)
+        fout.write(data)
         fout.close()
-
 
     def getVoice(self,text):
         '''
@@ -118,9 +134,9 @@ class AiPlat(object):
         text：需要合成的文字
         '''
         req=self.__getNlpVoice(text)
-        if req['ret']==0:
+        if req['code']==200:
             #保存
-            self.__ToFile(req['data']['speech'])
+            self.__ToFile(req['data'])
             self.__lastvoice=self.__fileName
         else:
             self.__lastvoice=self.__voice_error
@@ -132,3 +148,9 @@ class AiPlat(object):
         '''
         t=threading.Thread(target=playsound,args=(self.__lastvoice,))
         t.start()
+
+if __name__ == '__main__':
+
+    ai=AiPlat()
+    ai.getVoice("攻击间隔为：1,2,3,4,5,6,7,8")
+    ai.playVoice()
