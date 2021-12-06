@@ -1,0 +1,28 @@
+# 项目设置
+
+# 缓存文件
+data:
+  path: ./data
+  file: data.json
+
+# 声音设置
+voice:
+  # 默认参数
+  error: ./voice/error.wav
+  request: ./voice/getting.wav
+  # 服务参数
+  app-id: ~
+  app-key: ~
+  secret-key: ~
+
+  # 接口参数
+  # 语速，取值0-15
+  spd: 5
+  # 音调，取值0-15
+  pit: 5
+  # 音量，取值0-15
+  vol: 5
+  # 度小宇=1，度小美=0，度逍遥（基础）=3，度丫丫=4
+  per: 0
+  # 3为mp3格式(默认)； 4为pcm-16k；5为pcm-8k；6为wav
+  aue: 6
